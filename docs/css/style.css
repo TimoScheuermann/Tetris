@@ -1,0 +1,53 @@
+body {
+    font-family: 'VT323', monospace;
+    font-weight: 200;
+    padding: 0;
+    margin: 0;
+}
+
+.navbar {
+    position: fixed;
+    user-select: none;
+    color: white;
+    line-height: 8vh;
+    height: 8vh;
+    width: 60vw;
+    display: block;
+    text-align: center;
+    padding: 0 20vw;
+    font-size: 6vh;
+}
+
+.content {
+    display: block;
+    text-align: center;
+    padding-top: 9vh;
+}
+
+.tile {
+    display: inline-block;
+}
+
+.game {
+    display: grid;
+    grid-template-columns: repeat(10, 4.4vh);
+    grid-template-rows: repeat(20, 4.4vh);
+    grid-gap: 0px 0px;
+    height: 88vh;
+    width: 44vh;
+}
+
+.block {
+    display: inline-grid;
+    background: rgba(0, 0, 0, .5);
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.remove {
+    animation: flicker .26s linear 0s infinite alternate;
+}
+
+@keyframes flicker {
+    0% { filter: brightness(100%); }
+    100% { filter: brightness(140%); }
+}

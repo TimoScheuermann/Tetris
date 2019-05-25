@@ -1,0 +1,17 @@
+body { background-image: linear-gradient(#fff, #f9f9f9); }
+
+.red { background-image: linear-gradient(#fc5c65, #eb3b5a); }
+.orange { background-image: linear-gradient(#fd9644, #fa8231); }
+.yellow { background-image: linear-gradient(#fed330, #f7b731); }
+.green { background-image: linear-gradient(#26de81, #20bf6b); }
+.cyan { background-image: linear-gradient(#2bcbba, #0fb9b1); }
+.blue { background-image: linear-gradient(#45aaf2, #2d98da); }
+.dark-blue { background-image: linear-gradient(#4b7bec, #3867d6); }
+.purple { background-image: linear-gradient(#a55eea, #8854d0); }
+.light-gray { background-image: linear-gradient(#d1d8e0, #a5b1c2); }
+.gray { background-image: linear-gradient(#778ca3, #4b6584); }
+.black { background-image: linear-gradient(#353b48, #2f3640); }
+
+.game {
+    border: .5vh solid rgba(53,59,72, .35);
+}

@@ -1,1 +1,367 @@
-{\rtf1}
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link href="https://fonts.googleapis.com/css?family=VT323&display=swap" rel="stylesheet">
+        <link href="css/style.css" rel="stylesheet">
+        <link href="css/themes/default.css" rel="stylesheet">
+        <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+        <script type="text/javascript" src="js/lodash.js"></script>
+        <title>Tetris</title>
+    </head>
+    
+    <body>
+    
+        <div class="navbar black">Tetris</div>
+
+        <div class="content grey">
+
+            <div class="tile">
+                <div class="game" id="field"></div>
+            </div>
+
+            <div class="tile">
+                <div class="game" id="info"></div>
+            </div>
+
+        </div>
+
+    </body>
+
+</html>
+
+<script>
+
+document.addEventListener('keydown', e => {
+    e.preventDefault();
+    if(e.key == 'ArrowUp') {
+
+        if(rotationLocked) return;
+        if(!canRotateTo(1)) return;
+
+        rotationLocked = true;
+        currRotation = (currRotation+1)%4;
+        updateLocation();
+
+        setTimeout(function() {
+            rotationLocked = false;
+        }, 90);
+    }
+    else if(e.key == 'ArrowDown') {
+        if(!canMoveTo(0, 1)) return;
+        currY ++;
+        updateLocation();
+    }
+    else if(e.key == 'ArrowRight') {
+        if(!canMoveTo(1, 0)) return;
+        currX ++;
+        updateLocation();
+    }
+    else if(e.key == 'ArrowLeft') {
+        if(!canMoveTo(-1, 0)) return;
+        currX --;
+        updateLocation();
+    }
+});
+
+var currTetromino = random(0,6),
+    nextTetromino = random(0,6),
+    currRotation = 0,
+    currX = 5,
+    currY = -1,
+    rotationLocked = false,
+    waitForRemoval = false;
+
+var fixedBlocks = [];
+
+var tetrominos = [
+{
+    name: "I",
+    color: "cyan",
+    blocks: [
+        [ {x: -1, y: 0}, {x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0} ],
+        [ {x: 1, y: -1}, {x: 1, y: 0}, {x: 1, y: 1}, {x: 1, y: 2} ],
+        [ {x: -1, y: 1}, {x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1} ],
+        [ {x: 0, y: -1}, {x: 0, y: 0}, {x: 0, y: 1}, {x: 0, y: 2} ]]
+}, {
+    name: "L",
+    color: "blue",
+    blocks: [
+        [ {x: 1, y: 1}, {x: -1, y: 0}, {x: 0, y: 0}, {x: 1, y: 0} ],
+        [ {x: 0, y: 1}, {x: 0, y: 0}, {x: 0, y: -1}, {x: -1, y: 1} ],
+        [ {x: -1, y: -1}, {x: -1, y: 0}, {x: 0, y: 0}, {x: 1, y: 0} ],
+        [ {x: 0, y: 1}, {x: 0, y: 0}, {x: 0, y: -1}, {x: 1, y: -1} ]]
+}, {
+    name: "J",
+    color: "orange",
+    blocks: [
+        [ {x: -1, y: 0}, {x: 0, y: 0}, {x: 1, y: 0}, {x: -1, y: 1} ],
+        [ {x: 0, y: -1}, {x: 0, y: 0}, {x: 0, y: 1}, {x: -1, y: -1} ],
+        [ {x: -1, y: 0}, {x: 0, y: 0}, {x: 1, y: 0}, {x: 1, y: -1} ],
+        [ {x: 0, y: -1}, {x: 0, y: 0}, {x: 0, y: 1}, {x: 1, y: 1} ]]
+}, {
+    name: "O",
+    color: "yellow",
+    blocks: [
+        [ {x: 1, y: 0}, {x: 1, y: 1}, {x: 0, y: 0}, {x: 0, y: 1} ],
+        [ {x: 1, y: 0}, {x: 1, y: 1}, {x: 0, y: 0}, {x: 0, y: 1} ],
+        [ {x: 1, y: 0}, {x: 1, y: 1}, {x: 0, y: 0}, {x: 0, y: 1} ],
+        [ {x: 1, y: 0}, {x: 1, y: 1}, {x: 0, y: 0}, {x: 0, y: 1} ]]
+}, {
+    name: "S",
+    color: "green",
+    blocks: [
+        [ {x: 0, y: 0}, {x: 1, y: 0}, {x: -1, y: 1}, {x: 0, y: 1} ],
+        [ {x: 0, y: 0}, {x: 0, y: 1}, {x: -1, y: 0}, {x: -1, y: -1} ],
+        [ {x: 0, y: 0}, {x: -1, y: 0}, {x: 0, y: -1}, {x: 1, y: -1} ],
+        [ {x: 0, y: 0}, {x: 0, y: -1}, {x: 1, y: 0}, {x: 1, y: 1} ]]
+}, {
+    name: "T",
+    color: "purple",
+    blocks: [
+        [ {x: -1, y: 0}, {x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: 1} ],
+        [ {x: 0, y: -1}, {x: 0, y: 0}, {x: 0, y: 1}, {x: -1, y: 0} ],
+        [ {x: -1, y: 0}, {x: 0, y: 0}, {x: 1, y: 0}, {x: 0, y: -1} ],
+        [ {x: 0, y: -1}, {x: 0, y: 0}, {x: 0, y: 1}, {x: 1, y: 0} ]]
+}, {
+    name: "Z",
+    color: "red",
+    blocks: [
+        [ {x: 0, y: 0}, {x: -1, y: 0}, {x: 0, y: 1}, {x: 1, y: 1} ],
+        [ {x: 0, y: 0}, {x: -1, y: 0}, {x: -1, y: 1}, {x: 0, y: -1} ],
+        [ {x: 0, y: 0}, {x: 1, y: 0}, {x: -1, y: -1}, {x: 0, y: -1} ],
+        [ {x: 0, y: 0}, {x: 1, y: 0}, {x: 1, y: -1}, {x: 0, y: 1} ]]
+}];
+
+function newTetromino() {
+    
+    currTetromino = nextTetromino;
+    nextTetromino = random(0,6);
+    currRotation = 0;
+    currX = 5; currY = 1;
+    var color = tetrominos[currTetromino].color;
+
+    tetrominos[currTetromino].blocks[currRotation].forEach(block => {
+
+        var classes = "\"block move " + color + "\"";
+        var xPos = "grid-column: " + (block.x+currX) + ";";
+        var yPos = "grid-row: " + (block.y+currY) + ";";
+        var styles = "\"" + xPos + yPos + "\"";
+
+        $("#field").append("<div class=" + classes + " style=" + styles + "></div>");
+
+    });
+
+ //   $("#field").append("<div class=\"block\" style=\"grid-row: " + currY + "; grid-column-start: 1; grid-column-end: 11; background: rgba(0,0,0,.5);\"></div>")
+}
+
+function moveDown() {
+
+    if(waitForRemoval) {
+        setTimeout(function() {
+            moveDown();
+        }, 200);
+        return;
+    }
+
+    var isNew = false;
+    if(currY == -1) {
+        newTetromino();
+        isNew = true;
+    }
+
+    if(!canMoveTo(0, 1)) {
+
+        if(isNew) {
+            console.log("Game Over!");
+            return;
+        }
+        waitForRemoval = true;
+        placeCurrentTetromino();
+        currY = -1;
+    }
+
+    if(currY != -1) {
+        currY ++;
+        updateLocation();
+    }
+    
+    setTimeout(function() {
+        moveDown();
+    }, 200);
+
+}
+
+function placeCurrentTetromino() {
+
+    document.querySelectorAll(".move").forEach(element => {
+        element.classList.remove("move");
+        element.classList.add("r" + element.style.gridRow.split(" / ")[0]);
+    });
+
+    tetrominos[currTetromino].blocks[currRotation].forEach(block => {
+
+        var xPos = block.x+currX;
+        var yPos = block.y+currY;
+
+        fixedBlocks.push({
+            x: xPos,
+            y: yPos
+        });
+
+    });    
+
+    checkIfLineFull(getObsessedLines());
+}
+
+function checkIfLineFull(obsessed) {
+
+    var map = new Map();
+    for(var i = obsessed.min; i <= obsessed.max; i ++) {
+        map.set("" + i, 0);
+    }
+
+    var lines = [];
+    fixedBlocks.forEach(fb => {
+        if(fb.y >= obsessed.min || fb.y <= obsessed.max) {
+            var amount = map.get("" + fb.y) + 1;
+            if(amount == 10) lines.push(fb.y);
+            map.set("" + fb.y, amount);
+        }
+    });
+
+    if(lines.length == 0) waitForRemoval = false;
+
+    lines.forEach(line => {
+        document.querySelectorAll(".r" + line).forEach(element => {
+            element.classList.add("remove");
+        });
+    });
+
+    setTimeout(() => {
+
+        var i = 0;
+        while(i < lines.length) {
+            
+            console.log("================ [ " + (i+1) + " / " + lines.length + " ] ====================")
+            console.log("Line >> " + lines[i]);
+            document.querySelectorAll(".r" + lines[i]).forEach(element => {
+                element.remove();
+            });
+            moveObjectsAboveXOneRowDown(lines[i]);
+            i ++;
+        }
+
+        waitForRemoval = false;
+
+    }, 900);
+
+}
+
+function moveObjectsAboveXOneRowDown(above) {
+
+    console.log("Move above >> " + above);
+
+    _.remove(fixedBlocks, o => {
+        return o.y == above;
+    })
+
+    fixedBlocks.forEach(fb => {
+        if(fb.y < above) fb.y ++;
+    });
+    
+    for(var i = above; i > 0; i --) {
+        document.querySelectorAll(".r" + i).forEach(element => {
+            element.classList.remove("r" + i);
+            element.classList.add("r" + (i+1));
+            element.style.gridRow = (i+1) + " / auto";
+        });
+    }
+    
+    console.log("Done moving >> " + above);
+    return true;
+}
+
+function updateLocation() {
+    
+    var elements = document.getElementsByClassName("move");
+    while(elements.length > 0) {
+        elements[0].parentNode.removeChild(elements[0]);
+    }
+
+    var color = tetrominos[currTetromino].color;
+    tetrominos[currTetromino].blocks[currRotation].forEach(block => {
+
+        var classes = "\"block move " + color + "\"";
+        var xPos = "grid-column: " + (block.x+currX) + ";";
+        var yPos = "grid-row: " + (block.y+currY) + ";";
+        var styles = "\"" + xPos + yPos + "\"";
+
+        $("#field").append("<div class=" + classes + " style=" + styles + "></div>");
+    
+    });
+}
+
+function getObsessedLines() {
+    var vals = {
+        min: 100,
+        max: -100
+    };
+
+    tetrominos[currTetromino].blocks[currRotation].forEach(tB => {
+        var newY = tB.y + currY;
+        if(newY > vals.max) vals.max = newY;
+        if(newY < vals.min) vals.min = newY;
+    });
+    return vals;
+}
+
+function canRotateTo(rotationIncrement) {
+
+    var canRotate = true;
+    var rotation = (currRotation+rotationIncrement)%4;
+
+    tetrominos[currTetromino].blocks[rotation].forEach(tB => {
+
+        var newX = tB.x + currX;
+        var newY = tB.y + currY;
+
+        if(newX > 10 || newX < 1 || newY > 20 || newY < 1) canRotate = false; 
+
+        fixedBlocks.forEach(fB => {
+            if(fB.x == newX && fB.y == newY) canRotate = false;
+        });
+
+    });
+
+    return canRotate;
+}
+
+function canMoveTo(xIncrement, yIncrement) {
+    
+    var canMove = true;
+    tetrominos[currTetromino].blocks[currRotation].forEach(tB => {
+
+        var newX = tB.x + currX + xIncrement;
+        var newY = tB.y + currY + yIncrement;
+        if(newX > 10 || newX < 1 || newY > 20 || newY < 1) {
+            canMove = false;
+        }
+
+        fixedBlocks.forEach(fB => {
+            if(fB.x == newX && fB.y == newY) canMove = false;
+        });
+
+    });
+
+    return canMove;
+}
+
+function random(min, max) {
+    return Math.round(min + Math.random() * (max-min));
+}
+
+</script>
